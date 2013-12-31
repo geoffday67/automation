@@ -38,66 +38,14 @@ void set_low (int fd)
 	ioctl (fd, TIOCMSET, &signals);
 }
 
-void send_short (int fd)
-{
-	set_high (fd);
-	nanosleep (&HIGH_PULSE, NULL);
-	set_low (fd);
-	nanosleep (&SHORT_LOW_PULSE, NULL);
-}
-
-void send_long (int fd)
-{
-	set_high (fd);
-	nanosleep (&HIGH_PULSE, NULL);
-	set_low (fd);
-	nanosleep (&LONG_LOW_PULSE, NULL);
-}
-
-void send_gap (int fd)
-{
-	set_low (fd);
-	nanosleep (&GAP_PULSE, NULL);
-}
-
-void send_file (int fd, char *pfilename)
-{
-	FILE *fin;
-	int c;
-
-	fin = fopen (pfilename, "rt");
-	if (fin == NULL)
-	{
-		printf ("Error opening input: %s\n", strerror (errno));
-		return;
-	}
-
-	while ((c = fgetc (fin)) != EOF)
-	{
-		switch (c)
-		{
-			case '*':
-				send_gap (fd);
-				break;
-
-			case 'S':
-				send_short (fd);
-				break;
-
-			case 'L':
-				send_long (fd);
-				break;
-		}
-	}
-
-	fclose (fin);
-
-	printf ("Sending complete\n");
-}
-
 void delay (int microseconds)
 {
+	static int offset = 50;
 	struct timespec time;
+
+	if (microseconds <= offset)
+		return;
+
 	time.tv_sec = 0;
 	time.tv_nsec = (microseconds - 50) * 1000L;
 	nanosleep (&time, NULL);
@@ -140,72 +88,64 @@ void send (int fd, byte *pmessage)
 	}
 }
 
-void square (int fd)
+int command (int fd, char *pcommand)
 {
-	int n;
+	int signals;
 
-	for (n = 0; n < 30000; n++)
+	if (!strcmp (pcommand, "quit"))
+		return -1;
+
+	if (!strcmp (pcommand, "reset"))
 	{
-		set_high (fd);
-		nanosleep (&HIGH_PULSE, NULL);
-		set_low (fd);
-		nanosleep (&HIGH_PULSE, NULL);
+		ioctl (fd, TIOCMGET, &signals);
+		signals &= ~TIOCM_RTS;
+		ioctl (fd, TIOCMSET, &signals);
 	}
+	else if (!strcmp (pcommand, "set"))
+	{
+		ioctl (fd, TIOCMGET, &signals);
+		signals |= TIOCM_RTS;
+		ioctl (fd, TIOCMSET, &signals);
+	}
+	else if (!strcmp (pcommand, "on"))
+	{
+		send (fd, on);
+	}
+	else if (!strcmp (pcommand, "off"))
+	{
+		send (fd, off);
+	}
+
+	return 0;
 }
 
 int main (int argc, char **ppargv)
 {
 	char *pline;
 	size_t length;
-	int fd, done, signals;
+	int fd, done;
 
 	fd = open ("/dev/ttyS0", O_RDWR | O_NOCTTY | O_NONBLOCK);
 	if (fd == -1)
-	{
-		printf ("Error opening port: %s\n", strerror (errno));
 		return -1;
-	}
 	fcntl (fd, F_SETFL, 0);
 
-	done = 0;
-	while (!done)
+	if (argc > 1)
 	{
-		pline = NULL;
-		getline (&pline, &length, stdin);
-
-		if (!strcmp (pline, "quit\n"))
-			done = 1;
-		else if (!strcmp (pline, "reset\n"))
+		// Process command line argument
+		command (fd, ppargv [1]);
+	}
+	else
+	{
+		done = 0;
+		while (!done)
 		{
-			ioctl (fd, TIOCMGET, &signals);
-			signals &= ~TIOCM_RTS;
-			ioctl (fd, TIOCMSET, &signals);
-		}
-		else if (!strcmp (pline, "set\n"))
-		{
-			ioctl (fd, TIOCMGET, &signals);
-			signals |= TIOCM_RTS;
-			ioctl (fd, TIOCMSET, &signals);
-		}
-		else if (!strcmp (pline, "square\n"))
-		{
-			square (fd);
-		}
-		else if (!strcmp (pline, "on\n"))
-		{
-			send (fd, on);
-		}
-		else if (!strcmp (pline, "off\n"))
-		{
-			send (fd, off);
-		}
-		else
-		{
+			pline = NULL;
+			getline (&pline, &length, stdin);
 			pline [strlen (pline) - 1] = '\0';
-			send_file (fd, pline);
+			done = (command (fd, pline) == -1);
+			free (pline);
 		}
-
-		free (pline);
 	}
 
 	close (fd);
