@@ -1,0 +1,56 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+	button
+	{
+		width: 150px;
+		height: 150px;
+		margin: 30px;
+		font-size: x-large;
+	}
+	</style>
+
+	<title>Remote control</title>
+
+    <script src="http://code.jquery.com/jquery.js"></script>
+	<script type="text/javascript">
+
+/*********************************************************************************************/
+function doCommand(command)
+{
+	$.ajax(
+	{
+		url: './interface',
+		type: 'POST',
+		data:
+		{
+			operation: 'x10',
+			command: command
+		},
+		dataType: 'json',
+		success: function(response)
+		{
+			if (response.result == 'error')
+			{
+				console.error(response.message);
+				return;
+			}
+		},
+		error: function(xhr, status, error)
+		{
+			alert('Error in doCommand(): ' + error);
+		}
+	});
+}
+	</script>
+</head>
+
+<body>
+	<button onclick="doCommand('on')";>ON</button>
+	<button onclick="doCommand('off')";>OFF</button>
+</body>
+</html>
