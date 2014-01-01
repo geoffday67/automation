@@ -5,11 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 	<style>
+	body
+	{
+		font-family: verdana, sans-serif;
+		font-size: large;
+		margin: 30px;
+	}
+
 	button
 	{
 		width: 150px;
 		height: 150px;
-		margin: 30px;
 		font-size: x-large;
 	}
 	</style>
@@ -22,6 +28,8 @@
 /*********************************************************************************************/
 function doCommand(command)
 {
+	$('#setting').html('CHANGING...');
+
 	$.ajax(
 	{
 		url: './interface',
@@ -36,8 +44,11 @@ function doCommand(command)
 		{
 			if (response.result == 'error')
 			{
-				console.error(response.message);
-				return;
+				alert (response.message);
+			}
+			else
+			{
+				$('#setting').html(command.toUpperCase());
 			}
 		},
 		error: function(xhr, status, error)
@@ -52,5 +63,6 @@ function doCommand(command)
 <body>
 	<button onclick="doCommand('on')";>ON</button>
 	<button onclick="doCommand('off')";>OFF</button>
+	<p>Switch is now <strong id="setting">UNKNOWN</strong></p>
 </body>
 </html>
