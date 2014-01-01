@@ -1,5 +1,3 @@
-var x10 = require ('./x10.js');
-
 var express = require ('express');
 var app = express ();
 var server = require ('http').createServer (app);
@@ -44,8 +42,6 @@ app.post ('/interface', function (request, response)
 	}
 });
 
-x10.setUp ();
-
 server.listen (1968, function ()
 {
 	console.log ('Server listening');
@@ -59,6 +55,5 @@ process.on ('SIGINT', function ()
 
 process.on ('exit', function ()
 {
-	x10.tearDown ();
 	console.log ('Closing down');
 });

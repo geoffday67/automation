@@ -24,7 +24,7 @@ void set_high (int fd)
 
 	// Set RTS to 5v
 	ioctl (fd, TIOCMGET, &signals);
-	signals &= ~TIOCM_RTS;
+	signals |= TIOCM_RTS;
 	ioctl (fd, TIOCMSET, &signals);
 }
 
@@ -34,7 +34,7 @@ void set_low (int fd)
 
 	// Set RTS to 0v
 	ioctl (fd, TIOCMGET, &signals);
-	signals |= TIOCM_RTS;
+	signals &= ~TIOCM_RTS;
 	ioctl (fd, TIOCMSET, &signals);
 }
 
@@ -78,6 +78,8 @@ void send (int fd, byte *pmessage)
 {
 	int repeat, n;
 
+	delay (10250);
+
 	for (repeat = 0; repeat < 12; repeat++)
 	{
 		send_bit (fd, 1);
@@ -86,6 +88,8 @@ void send (int fd, byte *pmessage)
 		send_bit (fd, 1);
 		delay (10250);
 	}
+
+	set_low (fd);
 }
 
 int command (int fd, char *pcommand)
@@ -129,6 +133,8 @@ int main (int argc, char **ppargv)
 	if (fd == -1)
 		return -1;
 	fcntl (fd, F_SETFL, 0);
+
+	set_low (fd);
 
 	if (argc > 1)
 	{
