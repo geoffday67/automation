@@ -8,6 +8,11 @@
 #include <signal.h>
 #include <memory.h>
 
+#define COMMAND_OFF		0
+#define COMMAND_ON		1
+
+int Channel, Command;
+
 typedef unsigned char byte;
 
 static byte on[]  = {0xF6, 0xF6, 0xEE, 0xEE, 0x6F, 0xED, 0xBB, 0xBE, 0xBE, 0xBD};
@@ -47,7 +52,7 @@ void delay (int microseconds)
 		return;
 
 	time.tv_sec = 0;
-	time.tv_nsec = (microseconds - 50) * 1000L;
+	time.tv_nsec = (microseconds - offset) * 1000L;
 	nanosleep (&time, NULL);
 }
 
@@ -92,6 +97,38 @@ void send (int fd, byte *pmessage)
 	set_low (fd);
 }
 
+byte encode_value (int value)
+{
+	static byte table [] = {0xF6, 0xEE, 0xED, 0xEB, 0xDE, 0xDD, 0xDB, 0xBE, 0xBD, 0xBB, 0xB7, 0x7E, 0x7D, 0x7B, 0x77, 0x6F};
+
+	if (value < 0 || value > 15)
+		return 0;
+
+	return table [value];
+}
+
+void send_command (int fd, int channel, int command)
+{
+	static byte TRANSMITTER_ID [6] = {0x6F, 0xED, 0xBB, 0xBE, 0xBE, 0xBD};
+	byte message [10];
+
+	// Set final 6 bytes to our transmitter's ID
+	memcpy (message + 4, TRANSMITTER_ID, 6);
+
+	// Set level to zero as we're not using it here
+	message [0] = 0xF6;
+	message [1] = 0xF6;
+
+	// Set channel byte
+	message [2] = encode_value (channel);
+
+	// Set command byte
+	message [3] = encode_value (command);
+
+	// Send completed command
+	send (fd, message);
+}
+
 int command (int fd, char *pcommand)
 {
 	int signals;
@@ -119,8 +156,37 @@ int command (int fd, char *pcommand)
 	{
 		send (fd, off);
 	}
+	else if (!strcmp (pcommand, "test1"))
+	{
+		send_command (fd, 0, COMMAND_ON);
+	}
+	else if (!strcmp (pcommand, "test2"))
+	{
+		send_command (fd, 0, COMMAND_OFF);
+	}
 
 	return 0;
+}
+
+void parse_args (int argc, char **ppargv)
+{
+	int index = 1;
+
+	while (index < argc)
+	{
+		if (!strcmp (ppargv [index], "--channel"))
+			Channel = atoi (ppargv [++index]) - 1;
+		else if (!strcmp (ppargv [index], "--command"))
+		{
+			index++;
+			if (!strcmp (ppargv [index], "on"))
+				Command = COMMAND_ON;
+			else if (!strcmp (ppargv [index], "off"))
+				Command = COMMAND_OFF;
+		}
+
+		index++;
+	}
 }
 
 int main (int argc, char **ppargv)
@@ -138,8 +204,8 @@ int main (int argc, char **ppargv)
 
 	if (argc > 1)
 	{
-		// Process command line argument
-		command (fd, ppargv [1]);
+		parse_args (argc, ppargv);
+		send_command (fd, Channel, Command);
 	}
 	else
 	{
