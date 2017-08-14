@@ -9,14 +9,30 @@
 	{
 		font-family: verdana, sans-serif;
 		font-size: large;
-		margin: 30px;
+		margin: 20px;
 	}
 
-	button
+	table
 	{
-		width: 150px;
-		height: 150px;
-		font-size: x-large;
+		margin-left: auto;
+		margin-right: auto;
+	}
+
+	td
+	{
+		padding: 10px;
+	}
+
+	.switch
+	{
+		width: 64px;
+		height: 64px;
+	}
+
+	#spinner
+	{
+		text-align: center;
+		margin-top: 20px;
 	}
 	</style>
 
@@ -26,9 +42,30 @@
 	<script type="text/javascript">
 
 /*********************************************************************************************/
-function doCommand(command)
+$('document').ready(function()
 {
-	$('#setting').html('CHANGING...');
+	$('.switch').click (function (data)
+	{
+		if ($(data.target).hasClass ('on'))
+			var command = 'on';
+		else
+			var command = 'off';
+
+		var channel = $('#grid tr').index($(data.target).parent().parent()) + 1;
+
+		doCommand (channel, command);
+	});
+
+	$('img.switch.on').attr ('src', 'restart.png');
+	$('img.switch.off').attr ('src', 'shutdown.png');
+
+	$('#spinner').hide ();
+});
+
+/*********************************************************************************************/
+function doCommand (channel, command)
+{
+	$('#spinner').show ();
 
 	$.ajax(
 	{
@@ -37,6 +74,7 @@ function doCommand(command)
 		data:
 		{
 			operation: '433',
+			channel: channel,
 			command: command
 		},
 		dataType: 'json',
@@ -54,6 +92,10 @@ function doCommand(command)
 		error: function(xhr, status, error)
 		{
 			alert('Error in doCommand(): ' + error);
+		},
+		complete: function ()
+		{
+			$('#spinner').hide ();
 		}
 	});
 }
@@ -61,8 +103,26 @@ function doCommand(command)
 </head>
 
 <body>
-	<button onclick="doCommand('on')";>ON</button>
-	<button onclick="doCommand('off')";>OFF</button>
-	<p>Switch is now <strong id="setting">UNKNOWN</strong></p>
+	<table id="grid">
+		<tr id="plug_1">
+			<td>Plug 1</td>
+			<td><img class="switch on"></td>
+			<td><img class="switch off"></td>
+		</tr>
+		<tr id="plug_2">
+			<td>Plug 2</td>
+			<td><img class="switch on"></td>
+			<td><img class="switch off"></td>
+		</tr>
+		<tr id="plug_3">
+			<td>Plug 3</td>
+			<td><img class="switch on"></td>
+			<td><img class="switch off"></td>
+		</tr>
+	</table>
+
+	<div id="spinner">
+		Changing...
+	</div>
 </body>
 </html>

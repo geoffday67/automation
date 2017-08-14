@@ -9,24 +9,31 @@ function Handler ()
 	{
 		var self = this;
 
-		switch (query.command)
-		{
-			case 'on':
-				child.exec('433mhz/bin/send on', function (error, stdout, stderr)
-				{
-					console.log ("Send done " + error);
-					self.emit ('done', null, answer);
-				});
-				break;
+		// Get channel; default to 1
+		var channel = parseInt (query.channel) || 1;
 
-			case 'off':
-				child.exec('433mhz/bin/send off', function (error, stdout, stderr)
+		// Get command; default to on
+		var command = query.command || 'on';
+
+		// Construct parameters
+		var params = '--channel ' + channel + ' --command ' + command;
+
+		// Launch executable with parameters
+		child.exec('433mhz/bin/send ' + params, function (error, stdout, stderr)
+		{
+			// Check for optional 'duration' parameter (in seconds)
+			// Only apply to 'on' commands
+			var duration = query.duration;
+			if (duration && command == 'on')
+			{
+				setTimeout (function ()
 				{
-					console.log ("Send done " + error);
-					self.emit ('done', null, answer);
-				});
-				break;
-		}
+					child.exec('433mhz/bin/send --command off --channel ' + channel);
+				}, duration * 1000);
+			}
+
+			self.emit ('done', null, answer);
+		});
 	};
 };
 
