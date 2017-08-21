@@ -1,8 +1,10 @@
 var express = require ('express');
+var bodyParser = require('body-parser')
+
 var app = express ();
 var server = require ('http').createServer (app);
 
-app.use (express.bodyParser());
+app.use(bodyParser.json())
 app.use (express.static (__dirname + '/'));
 
 var handlers = [];
