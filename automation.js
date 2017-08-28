@@ -1,3 +1,22 @@
+var program = require ('commander')
+
+program
+	.version(0.1)
+	.option('--command <n>', 'Command', parseInt)
+	.option('--channel <n>', 'Channel', parseInt)
+	.option('--port <name>', 'Port')
+	.parse(process.argv);
+
+global.remote = new (require ('./remote.js')) (program.port);
+	
+if (('command' in program) && ('channel' in program)) {
+	setTimeout (() => {
+		global.remote.send(program.channel, program.command);
+	}, 2000);
+
+	return;
+}
+
 var express = require ('express');
 var bodyParser = require('body-parser')
 
@@ -58,4 +77,5 @@ process.on ('SIGINT', function ()
 process.on ('exit', function ()
 {
 	console.log ('Closing down');
+	global.remote.close();
 });

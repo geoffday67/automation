@@ -1,4 +1,5 @@
 var events = require ('events');
+var child = require ('child_process');
 
 function Handler ()
 {
@@ -14,20 +15,20 @@ function Handler ()
 		// Get command; default to on
 		var command = query.command || 'on';
 
-		// Convert to parameter for Arduino
-		channel = channel - 1;
-		command = command == 'on' ? 1 : 0;
+		// Construct parameters
+		var params = '--channel ' + channel + ' --command ' + command;
 
-		// Send the command
-		global.remote.send(channel, command, () => {
+		// Launch executable with parameters
+		child.exec('433mhz/bin/send ' + params, function (error, stdout, stderr)
+		{
 			// Check for optional 'duration' parameter (in seconds)
 			// Only apply to 'on' commands
 			var duration = query.duration;
-			if (duration && command == 1)
+			if (duration && command == 'on')
 			{
 				setTimeout (function ()
 				{
-						global.remote.send(channel, 0, null);
+					child.exec('433mhz/bin/send --command off --channel ' + channel);
 				}, duration * 1000);
 			}
 
