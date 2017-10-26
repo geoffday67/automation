@@ -8,7 +8,7 @@ program
 	.parse(process.argv);
 
 global.remote = new (require ('./remote.js')) (program.port);
-	
+
 if (('command' in program) && ('channel' in program)) {
 	setTimeout (() => {
 		global.remote.send(program.channel, program.command);
@@ -52,7 +52,8 @@ app.post ('/interface', function (request, response)
 			{
 				answer = {result: 'error', message: err};
 			}
-			
+
+			response.setHeader ('Access-Control-Allow-Origin', '*');
 			response.send (answer);
 		});
 		handler.handle (request.body, {result: 'ok'});
