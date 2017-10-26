@@ -38,7 +38,7 @@
         /*********************************************************************************************/
         $('document').ready(function () {
             $('#switch').click(function (data) {
-                var command = 'operation=433&channel=2&command=off';
+                var command = 'on';
                 var channel = 2;
                 doCommand(channel, command);
             });
@@ -50,7 +50,7 @@
 
             $.ajax(
                 {
-                    url: './interface',
+                    url: 'http://192.168.1.5:1968/interface',
                     type: 'POST',
                     data:
                     {
