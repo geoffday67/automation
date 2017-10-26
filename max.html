@@ -1,0 +1,86 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            font-family: verdana, sans-serif;
+            font-size: large;
+            margin: 20px;
+        }
+
+        img#switch {
+            position: absolute;
+            margin: auto;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        #spinner {
+            text-align: center;
+            margin-top: 20px;
+            visibility: hidden;
+        }
+    </style>
+
+    <title>Max's PC</title>
+
+    <script src="http://code.jquery.com/jquery.js"></script>
+    <script type="text/javascript">
+
+        /*********************************************************************************************/
+        $('document').ready(function () {
+            $('#switch').click(function (data) {
+                var command = 'operation=433&channel=2&command=off';
+                var channel = 2;
+                doCommand(channel, command);
+            });
+        });
+
+        /*********************************************************************************************/
+        function doCommand(channel, command) {
+            $('#spinner').show();
+
+            $.ajax(
+                {
+                    url: './interface',
+                    type: 'POST',
+                    data:
+                    {
+                        operation: '433',
+                        channel: channel,
+                        command: command
+                    },
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.result == 'error') {
+                            alert(response.message);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        alert('Error in doCommand(): ' + error);
+                    },
+                    complete: function () {
+                        $('#spinner').hide();
+                    }
+                });
+        }
+    </script>
+</head>
+
+<body>
+    <img id="switch" class="centred" src="./switch.png" />
+
+    <div id="spinner">
+        Changing...
+    </div>
+</body>
+
+</html>
