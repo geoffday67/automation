@@ -25,8 +25,8 @@
 
         #spinner {
             text-align: center;
-            margin-top: 20px;
-            visibility: hidden;
+            margin-top: 40px;
+            display: none;
         }
     </style>
 
@@ -37,17 +37,27 @@
 
         /*********************************************************************************************/
         $('document').ready(function () {
+            //hideWait();
+
             $('#switch').click(function (data) {
-                var command = 'on';
+                showWait();
+
+                var command = 'off';
                 var channel = 2;
                 doCommand(channel, command);
+
+                setTimeout(function () {
+                    var command = 'on';
+                    var channel = 2;
+                    doCommand(channel, command, function() {
+                        hideWait();
+                    });
+                }, 3000);
             });
         });
 
         /*********************************************************************************************/
-        function doCommand(channel, command) {
-            $('#spinner').show();
-
+        function doCommand(channel, command, callback) {
             $.ajax(
                 {
                     url: 'http://192.168.1.5:1968/interface',
@@ -68,10 +78,24 @@
                         alert('Error in doCommand(): ' + error);
                     },
                     complete: function () {
-                        $('#spinner').hide();
+                        if (callback) {
+                            callback();
+                        }
                     }
                 });
         }
+
+        /*********************************************************************************************/
+        function showWait() {
+            $('#spinner').show();
+            $('#switch').css('filter', 'grayscale(100%)');
+        }        
+
+        /*********************************************************************************************/
+        function hideWait() {
+            $('#spinner').hide();
+            $('#switch').css('filter', '');
+        }        
     </script>
 </head>
 
@@ -79,7 +103,7 @@
     <img id="switch" class="centred" src="./switch.png" />
 
     <div id="spinner">
-        Changing...
+        Switching, please wait...
     </div>
 </body>
 
