@@ -19,7 +19,12 @@ function Handler ()
 		command = command == 'on' ? 1 : 0;
 
 		// Send the command
-		global.remote.send(channel, command, () => {
+		global.remote.send(channel, command, (error) => {
+			if (error) {
+				self.emit ('done', error);
+				return;
+			}
+			
 			// Check for optional 'duration' parameter (in seconds)
 			// Only apply to 'on' commands
 			var duration = query.duration;

@@ -37,22 +37,24 @@
 
         /*********************************************************************************************/
         $('document').ready(function () {
-            //hideWait();
-
             $('#switch').click(function (data) {
                 showWait();
 
                 var command = 'off';
                 var channel = 2;
-                doCommand(channel, command);
-
-                setTimeout(function () {
-                    var command = 'on';
-                    var channel = 2;
-                    doCommand(channel, command, function() {
+                doCommand(channel, command, function (error) {
+                    if (!error) {
+                        setTimeout(function () {
+                            var command = 'on';
+                            var channel = 2;
+                            doCommand(channel, command, function () {
+                                hideWait();
+                            });
+                        }, 3000);
+                    } else {
                         hideWait();
-                    });
-                }, 3000);
+                    }
+                });
             });
         });
 
@@ -60,26 +62,34 @@
         function doCommand(channel, command, callback) {
             $.ajax(
                 {
-                    url: 'http://192.168.1.5:1968/interface',
+                    url: './interface',
                     type: 'POST',
+                    /*headers: {
+                        "Authorization": "Basic " + btoa('wario:mansion1')
+                    },*/
                     data:
-                    {
-                        operation: '433',
-                        channel: channel,
-                        command: command
-                    },
+                        {
+                            operation: '433',
+                            channel: channel,
+                            command: command
+                        },
                     dataType: 'json',
                     success: function (response) {
                         if (response.result == 'error') {
-                            alert(response.message);
+                            alert('Error: ' + response.message);
+                            if (callback) {
+                                callback(response.message);
+                            }
+                        } else {
+                            if (callback) {
+                                callback();
+                            }
                         }
                     },
                     error: function (xhr, status, error) {
-                        alert('Error in doCommand(): ' + error);
-                    },
-                    complete: function () {
+                        alert('Error: ' + error);
                         if (callback) {
-                            callback();
+                            callback(error);
                         }
                     }
                 });
@@ -89,7 +99,7 @@
         function showWait() {
             $('#spinner').show();
             $('#switch').css('filter', 'grayscale(100%)');
-        }        
+        }
 
         /*********************************************************************************************/
         function hideWait() {

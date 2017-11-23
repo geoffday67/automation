@@ -23,8 +23,30 @@ var bodyParser = require('body-parser')
 var app = express ();
 var server = require ('http').createServer (app);
 
+app.use(function(req, res, next) {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
+
+    //intercepts OPTIONS method
+    if ('OPTIONS' === req.method) {
+      //respond with 200
+      res.sendStatus(200);
+    }
+    else {
+    //move on
+      next();
+    }
+});
+
+var basicAuth = require('express-basic-auth')
+app.use(basicAuth({
+   users: { 'wario': 'mansion1' },
+   challenge: true
+}))
+
 app.use(bodyParser.urlencoded({extended: false}))
-app.use (express.static (__dirname + '/'));
+app.use (express.static (__dirname + '/public'));
 
 var handlers = [];
 var files = require('fs').readdirSync('./');
@@ -45,15 +67,17 @@ app.post ('/interface', function (request, response)
 		if (!(request.body.operation in handlers))
 			throw 'Unknown operation: ' + request.body.operation;
 
+			console.log ('Operation: %s', request.body.operation);
+
 		var handler = handlers [request.body.operation].createHandler();
 		handler.on ('done', function (err, answer)
 		{
 			if (err)
 			{
+				console.error(err);
 				answer = {result: 'error', message: err};
 			}
 
-			response.setHeader ('Access-Control-Allow-Origin', '*');
 			response.send (answer);
 		});
 		handler.handle (request.body, {result: 'ok'});
