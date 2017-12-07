@@ -39,39 +39,22 @@
         $('document').ready(function () {
             $('#switch').click(function (data) {
                 showWait();
-
-                var command = 'off';
-                var channel = 2;
-                doCommand(channel, command, function (error) {
-                    if (!error) {
-                        setTimeout(function () {
-                            var command = 'on';
-                            var channel = 2;
-                            doCommand(channel, command, function () {
-                                hideWait();
-                            });
-                        }, 3000);
-                    } else {
-                        hideWait();
-                    }
+                doWOL(function(){
+                    hideWait();
                 });
             });
         });
 
         /*********************************************************************************************/
-        function doCommand(channel, command, callback) {
+        function doWOL(callback) {
             $.ajax(
                 {
                     url: './interface',
                     type: 'POST',
-                    /*headers: {
-                        "Authorization": "Basic " + btoa('wario:mansion1')
-                    },*/
                     data:
                         {
-                            operation: '433',
-                            channel: channel,
-                            command: command
+                            operation: 'wol',
+                            target: 'E0:3F:49:7F:78:7A'
                         },
                     dataType: 'json',
                     success: function (response) {
